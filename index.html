@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PABL0 — Crypto Intelligence System</title>
+<meta name="description" content="Real-time crypto intelligence dashboard with AI-powered research, DeFi analytics, risk monitoring, and actionable recommendations.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◈</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.min.js"></script>
+<script>if(!window.Recharts){document.write('<scr'+'ipt src="https://cdn.jsdelivr.net/npm/recharts@2.12.7/umd/Recharts.min.js"><\/scr'+'ipt>')}</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body,#root{height:100%;width:100%;background:#0a0e14;overflow-x:hidden}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:#0a0e14}
+::-webkit-scrollbar-thumb{background:#1a2332;border-radius:2px}
+::-webkit-scrollbar-thumb:hover{background:#6b7d93}
+button:hover:not(:disabled){filter:brightness(1.2)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.fade-in{animation:fadeIn 0.3s ease forwards}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/javascript">
+window.addEventListener('DOMContentLoaded', function() {
+try {
+const {useState,useEffect,useCallback,useRef}=React;
+const RC = window.Recharts || {};
+const LineChart=RC.LineChart||(()=>null),Line=RC.Line||(()=>null),XAxis=RC.XAxis||(()=>null),YAxis=RC.YAxis||(()=>null),Tooltip=RC.Tooltip||(()=>null),ResponsiveContainer=RC.ResponsiveContainer||function(p){return React.createElement("div",{style:{width:"100%",height:p.height||200}},p.children)},AreaChart=RC.AreaChart||(()=>null),Area=RC.Area||(()=>null),BarChart=RC.BarChart||(()=>null),Bar=RC.Bar||(()=>null),Cell=RC.Cell||(()=>null);
+
+const C={
+  bg:"#0a0e14",bgL:"#0d1117",pn:"#111820",pb:"#1a2332",
+  g:"#00ff9d",gD:"#00b36e",gK:"#003d24",
+  r:"#ff3b5c",rD:"#b3293f",
+  a:"#ffb800",aD:"#b38000",
+  cy:"#00d4ff",cyD:"#0099b8",
+  pu:"#a855f7",
+  t:"#c5cdd8",tD:"#6b7d93",tB:"#e8edf3"
+};
+const MF="'JetBrains Mono','Fira Code','SF Mono',monospace";
+
+const MD={
+  btc:{price:70790,ch:2.03,ath:126000,dd:-43.8,wk:-30,sup:58000,res:76000},
+  eth:{price:2135,ch:3.58,ath:4946,dd:-56.8,wk:-30,sup:1400,res:3000},
+  sol:{price:88.03,ch:1.96,ath:293,dd:-70.0,wk:-31.5,sup:60,res:105},
+  mcap:2.3,fg:17,dom:61.5,tvl:98.4
+};
+
+const BTCH=[
+  {d:"Oct",p:126000},{d:"Nov",p:115000},{d:"Dec",p:98000},
+  {d:"Jan 1",p:93000},{d:"Jan 15",p:85000},{d:"Jan 27",p:78000},
+  {d:"Feb 1",p:76400},{d:"Feb 3",p:76400},{d:"Feb 4",p:72000},
+  {d:"Feb 5",p:60062},{d:"Feb 6",p:64744},{d:"Feb 7",p:68000},{d:"Feb 8",p:70790}
+];
+
+const LIQD=[
+  {name:"Trend Research",eth:293121,liq:1630,risk:"CRITICAL"},
+  {name:"J. Lubin",eth:137000,liq:1329,risk:"HIGH"},
+  {name:"7 Siblings",eth:287000,liq:1029,risk:"MEDIUM"}
+];
+
+const TUNL=[
+  {token:"RAIN",value:89,date:"Feb 9-15"},
+  {token:"PUMP",value:72,date:"Feb 9-15"},
+  {token:"APT",value:65,date:"Feb 9-15"},
+  {token:"MOCA",value:4.3,date:"Feb 11"},
+  {token:"MOVE",value:3.8,date:"Feb 9-15"},
+  {token:"HOME",value:3.7,date:"Feb 10"}
+];
+
+const FGH=[
+  {d:"Jan 20",v:45},{d:"Jan 25",v:35},{d:"Jan 28",v:28},
+  {d:"Jan 30",v:26},{d:"Feb 1",v:18},{d:"Feb 3",v:17},
+  {d:"Feb 4",v:14},{d:"Feb 5",v:11},{d:"Feb 6",v:12},{d:"Feb 7",v:15},{d:"Feb 8",v:17}
+];
+
+const ETFF=[
+  {d:"Jan 30",btc:-509.7,eth:-252.9},
+  {d:"Feb 3",btc:45,eth:14.1},
+  {d:"Feb 4",btc:-272,eth:-68},
+  {d:"Feb 5",btc:-544.9,eth:-79.5},
+  {d:"Feb 6",btc:-434.2,eth:-80.8}
+];
+
+const RECS=[
+  {asset:"BTC",action:"DCA BUY",zone:"$58K-$65K",ev:"+EV",size:"1-2%",color:C.g},
+  {asset:"ETH",action:"CONDITIONAL BUY",zone:"$1,400-$1,800",ev:"COND +EV",size:"1% max",color:C.a},
+  {asset:"SOL",action:"DCA BUY",zone:"$60-$75",ev:"+EV",size:"1%",color:C.g},
+  {asset:"HYPE",action:"SELL/AVOID",zone:"Post-unlock",ev:"-EV",size:"0%",color:C.r},
+  {asset:"BERA",action:"AVOID",zone:"41.7% dilution",ev:"-EV",size:"0%",color:C.r},
+  {asset:"MSTR",action:"DO NOT BUY",zone:"-72% from peak",ev:"-EV",size:"0%",color:C.r},
+  {asset:"LEVERAGE",action:"CLOSE ALL",zone:"Any",ev:"CRITICAL",size:"0%",color:C.r}
+];
+
+const RISKS=[
+  {level:"CRITICAL",title:"Trend Research Liquidation Cascade",detail:"293K ETH ($563M) at liq $1,562-$1,698. ETH retest of $1,750 triggers ~$500M forced selling."},
+  {level:"CRITICAL",title:"Token Unlocks: $420M Next Week",detail:"RAIN, PUMP, APT leading. Follows $638M first-week unlocks. Sustained supply pressure."},
+  {level:"HIGH",title:"Strategy/MSTR Contagion",detail:"713K BTC underwater. $12.4B Q4 loss. mNAV premium collapsing. Equity down 72%."},
+  {level:"HIGH",title:"Compromised Telegram Accounts",detail:"$300M+ total losses from device compromise attacks. Step Finance ($40M) is latest."},
+  {level:"MEDIUM",title:"US-Iran Tensions / Oil",detail:"Geopolitical risk-off. Silver -30%, gold -15%. Cross-asset margin calls hitting crypto."},
+  {level:"LOW",title:"Gyroscope/CrossCurve Exploits",detail:"$700K + $2.7M. Smaller but signal ongoing bridge/cross-chain vulnerabilities."}
+];
+
+const Cur=()=>{
+  const[v,sV]=useState(true);
+  useEffect(()=>{const i=setInterval(()=>sV(x=>!x),530);return()=>clearInterval(i)},[]);
+  return React.createElement("span",{style:{color:C.g,opacity:v?1:0,fontFamily:MF}},"█");
+};
+
+const Scan=()=>React.createElement("div",{style:{
+  position:"fixed",top:0,left:0,right:0,bottom:0,
+  background:"repeating-linear-gradient(0deg,rgba(0,0,0,0.03) 0px,rgba(0,0,0,0.03) 1px,transparent 1px,transparent 3px)",
+  pointerEvents:"none",zIndex:9999
+}});
+
+const Panel=({title,icon,children,color=C.g,span=1,status})=>React.createElement("div",{
+  className:"fade-in",
+  style:{
+    background:C.pn,border:`1px solid ${C.pb}`,borderTop:`2px solid ${color}`,
+    padding:0,gridColumn:span>1?`span ${span}`:undefined,
+    display:"flex",flexDirection:"column",minHeight:0,borderRadius:2
+  }
+},[
+  React.createElement("div",{key:"h",style:{
+    display:"flex",justifyContent:"space-between",alignItems:"center",
+    padding:"8px 12px",borderBottom:`1px solid ${C.pb}`,background:"rgba(0,0,0,0.3)"
+  }},
+    React.createElement("span",{style:{fontFamily:MF,fontSize:11,color:color,letterSpacing:1.5,textTransform:"uppercase",fontWeight:700}},icon+" "+title),
+    status&&React.createElement("span",{style:{fontFamily:MF,fontSize:9,color:status==="LIVE"?C.g:C.a,background:status==="LIVE"?"#003d24":"rgba(255,184,0,0.15)",padding:"2px 6px",borderRadius:2,letterSpacing:1}},"● "+status)
+  ),
+  React.createElement("div",{key:"b",style:{padding:12,flex:1,overflow:"auto"}},children)
+]);
+
+const Met=({label,value,change,prefix="",suffix="",size="normal"})=>React.createElement("div",{style:{marginBottom:size==="large"?0:8}},[
+  React.createElement("div",{key:"l",style:{fontFamily:MF,fontSize:9,color:C.tD,letterSpacing:1.5,textTransform:"uppercase",marginBottom:2}},label),
+  React.createElement("div",{key:"v",style:{display:"flex",alignItems:"baseline",gap:6}},
+    React.createElement("span",{style:{fontFamily:MF,fontSize:size==="large"?28:18,color:C.tB,fontWeight:700}},prefix+(typeof value==="number"?value.toLocaleString():value)+suffix),
+    change!==undefined&&React.createElement("span",{style:{fontFamily:MF,fontSize:11,color:change>=0?C.g:C.r,fontWeight:600}},(change>=0?"▲":"▼")+" "+Math.abs(change)+"%")
+  )
+]);
+
+const PBar=({value,max,color=C.g,label})=>React.createElement("div",{style:{marginBottom:6}},[
+  label&&React.createElement("div",{key:"l",style:{fontFamily:MF,fontSize:9,color:C.tD,marginBottom:3}},label),
+  React.createElement("div",{key:"b",style:{height:4,background:C.bgL,borderRadius:2,overflow:"hidden"}},
+    React.createElement("div",{style:{height:"100%",width:`${(value/max)*100}%`,background:color,borderRadius:2,transition:"width 1s ease"}})
+  )
+]);
+
+const CTip=({active,payload,label})=>{
+  if(!active||!payload?.length)return null;
+  return React.createElement("div",{style:{background:C.pn,border:`1px solid ${C.pb}`,padding:"6px 10px",fontFamily:MF,fontSize:11}},
+    React.createElement("div",{style:{color:C.tD}},label),
+    ...payload.map((p,i)=>React.createElement("div",{key:i,style:{color:p.color||C.g}},p.name+": "+(typeof p.value==="number"?p.value.toLocaleString():p.value)))
+  );
+};
+
+const AITerm=({logs,isRunning})=>{
+  const ref=useRef(null);
+  useEffect(()=>{if(ref.current)ref.current.scrollTop=ref.current.scrollHeight},[logs]);
+  return React.createElement("div",{ref,style:{background:"#050810",border:`1px solid ${C.pb}`,borderRadius:2,padding:10,height:300,overflow:"auto",fontFamily:MF,fontSize:11,lineHeight:1.6}},
+    ...logs.map((l,i)=>React.createElement("div",{key:i,style:{color:l.type==="error"?C.r:l.type==="success"?C.g:l.type==="info"?C.cy:l.type==="warn"?C.a:C.tD}},
+      React.createElement("span",{style:{color:C.tD}},"["+l.time+"] "),l.msg
+    )),
+    isRunning&&React.createElement("div",{style:{color:C.g}},"Processing... ",React.createElement(Cur))
+  );
+};
+
+function Pabl0(){
+  const[tab,setTab]=useState("dashboard");
+  const[cd,setCd]=useState(3600);
+  const[logs,setLogs]=useState([]);
+  const[scanning,setScanning]=useState(false);
+  const[aiRes,setAiRes]=useState(null);
+  const[booted,setBooted]=useState(false);
+  const[bLines,setBLines]=useState([]);
+  const[now,setNow]=useState(new Date());
+
+  useEffect(()=>{
+    const msgs=["PABL0 INTELLIGENCE SYSTEM v2.6.0","Initializing neural research engine...","Loading market data feeds.............. OK","Connecting to on-chain analytics....... OK","Loading DeFi protocol monitors......... OK","Smart wallet tracker online............. OK","Risk assessment module loaded........... OK","Sentiment analysis engine ready......... OK","System ready. Welcome, operator."];
+    let i=0;
+    const iv=setInterval(()=>{if(i<msgs.length){setBLines(p=>[...p,msgs[i]]);i++}else{clearInterval(iv);setTimeout(()=>setBooted(true),600)}},180);
+    return()=>clearInterval(iv);
+  },[]);
+
+  useEffect(()=>{const i=setInterval(()=>setNow(new Date()),1000);return()=>clearInterval(i)},[]);
+  useEffect(()=>{const i=setInterval(()=>setCd(c=>c<=0?3600:c-1),1000);return()=>clearInterval(i)},[]);
+
+  const fmtCd=(s)=>{const m=Math.floor(s/60);const sc=s%60;return m.toString().padStart(2,"0")+":"+sc.toString().padStart(2,"0")};
+
+  const addLog=useCallback((msg,type="log")=>{
+    const n=new Date();
+    const t=n.getHours().toString().padStart(2,"0")+":"+n.getMinutes().toString().padStart(2,"0")+":"+n.getSeconds().toString().padStart(2,"0");
+    setLogs(p=>[...p.slice(-100),{msg,type,time:t}]);
+  },[]);
+
+  const runScan=async()=>{
+    if(scanning)return;
+    setScanning(true);setAiRes(null);
+    addLog("═══ INITIATING FULL INTELLIGENCE SCAN ═══","info");
+    addLog("Querying Claude AI with web search...","info");
+    try{
+      const r=await fetch("https://api.anthropic.com/v1/messages",{
+        method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+          model:"claude-sonnet-4-20250514",max_tokens:1000,
+          system:'You are a crypto analyst. Return ONLY JSON: {"btc_price":number,"eth_price":number,"sol_price":number,"market_cap_trillions":number,"fear_greed":number,"top_news":["","",""],"risk_level":"CRITICAL|HIGH|MEDIUM|LOW","key_signal":"","recommendation":""}',
+          messages:[{role:"user",content:"Current crypto prices BTC ETH SOL, top 3 news, market cap, fear&greed, most important trading signal right now."}],
+          tools:[{type:"web_search_20250305",name:"web_search"}]
+        })
+      });
+      const d=await r.json();
+      addLog("Response received. Processing...","success");
+      const ft=d.content?.map(i=>i.text||"").filter(Boolean).join("\n")||"";
+      try{
+        const cl=ft.replace(/```json|```/g,"").trim();
+        const p=JSON.parse(cl);
+        setAiRes(p);
+        addLog("BTC: $"+p.btc_price?.toLocaleString()+" | ETH: $"+p.eth_price?.toLocaleString()+" | SOL: $"+p.sol_price?.toLocaleString(),"success");
+        addLog("Risk: "+p.risk_level,p.risk_level==="CRITICAL"?"error":"warn");
+        addLog("Signal: "+p.key_signal,"info");
+        p.top_news?.forEach((n,i)=>addLog("  ["+(i+1)+"] "+n,"log"));
+        addLog("═══ SCAN COMPLETE ═══","success");
+      }catch(e){
+        addLog("Unstructured response. Displaying raw.","warn");
+        setAiRes({raw:ft});
+        addLog("═══ SCAN COMPLETE (RAW) ═══","warn");
+      }
+    }catch(e){
+      addLog("Error: "+e.message,"error");
+      addLog("Using cached data.","warn");
+    }
+    setScanning(false);setCd(3600);
+  };
+
+  const tabs=[
+    {id:"dashboard",label:"DASHBOARD",icon:"◈"},
+    {id:"defi",label:"DEFI",icon:"◇"},
+    {id:"solana",label:"SOLANA",icon:"◆"},
+    {id:"risk",label:"RISK",icon:"⚠"},
+    {id:"alpha",label:"ALPHA",icon:"★"},
+    {id:"terminal",label:"TERMINAL",icon:"▸"}
+  ];
+
+  if(!booted){
+    return React.createElement("div",{style:{background:C.bg,minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:MF}},
+      React.createElement("div",{style:{maxWidth:600,width:"100%"}},
+        React.createElement("pre",{style:{color:C.g,fontSize:10,lineHeight:1.2,marginBottom:20,textAlign:"center",letterSpacing:1}},
+` ██████╗  █████╗ ██████╗ ██╗      ██████╗ 
+ ██╔══██╗██╔══██╗██╔══██╗██║     ██╔═████╗
+ ██████╔╝███████║██████╔╝██║     ██║██╔██║
+ ██╔═══╝ ██╔══██║██╔══██╗██║     ████╔╝██║
+ ██║     ██║  ██║██████╔╝███████╗╚██████╔╝
+ ╚═╝     ╚═╝  ╚═╝╚═════╝ ╚══════╝ ╚═════╝`),
+        React.createElement("div",{style:{padding:"0 20px"}},
+          ...bLines.map((l,i)=>React.createElement("div",{key:i,style:{color:i===0?C.cy:l.includes("OK")?C.g:l.includes("ready")?C.a:C.tD,fontSize:12,marginBottom:4,fontWeight:i===0?700:400}},
+            (i>0&&i<bLines.length-1?"▸ ":"")+l
+          )),
+          bLines.length<9&&React.createElement(Cur)
+        )
+      ),
+      React.createElement(Scan)
+    );
+  }
+
+  const renderDashboard=()=>React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10}},
+    // BTC
+    React.createElement(Panel,{title:"Bitcoin",icon:"₿",color:MD.btc.ch>=0?C.g:C.r,status:"LIVE"},
+      React.createElement(Met,{label:"Price",value:MD.btc.price,prefix:"$",change:MD.btc.ch,size:"large"}),
+      React.createElement("div",{style:{display:"flex",gap:12,marginTop:8}},
+        React.createElement(Met,{label:"ATH DD",value:MD.btc.dd+"%"}),
+        React.createElement(Met,{label:"Week",value:MD.btc.wk+"%"})
+      ),
+      React.createElement(PBar,{value:MD.btc.price-MD.btc.sup,max:MD.btc.res-MD.btc.sup,color:C.a,label:"Support $58K — Resistance $76K"})
+    ),
+    // ETH
+    React.createElement(Panel,{title:"Ethereum",icon:"Ξ",color:MD.eth.ch>=0?C.g:C.r,status:"LIVE"},
+      React.createElement(Met,{label:"Price",value:MD.eth.price,prefix:"$",change:MD.eth.ch,size:"large"}),
+      React.createElement("div",{style:{display:"flex",gap:12,marginTop:8}},
+        React.createElement(Met,{label:"ATH DD",value:MD.eth.dd+"%"}),
+        React.createElement(Met,{label:"Week",value:MD.eth.wk+"%"})
+      ),
+      React.createElement(PBar,{value:MD.eth.price-MD.eth.sup,max:MD.eth.res-MD.eth.sup,color:C.r,label:"Support $1,400 — Resistance $3,000"})
+    ),
+    // SOL
+    React.createElement(Panel,{title:"Solana",icon:"◎",color:MD.sol.ch>=0?C.g:C.r,status:"LIVE"},
+      React.createElement(Met,{label:"Price",value:MD.sol.price,prefix:"$",change:MD.sol.ch,size:"large"}),
+      React.createElement("div",{style:{display:"flex",gap:12,marginTop:8}},
+        React.createElement(Met,{label:"ATH DD",value:MD.sol.dd+"%"}),
+        React.createElement(Met,{label:"Week",value:MD.sol.wk+"%"})
+      ),
+      React.createElement(PBar,{value:MD.sol.price-MD.sol.sup,max:MD.sol.res-MD.sol.sup,color:C.cy,label:"Support $60 — Resistance $105"})
+    ),
+    // Overview
+    React.createElement(Panel,{title:"Market Overview",icon:"◈",color:C.cy},
+      React.createElement(Met,{label:"Total Market Cap",value:"$"+MD.mcap+"T"}),
+      React.createElement(Met,{label:"BTC Dominance",value:MD.dom+"%"}),
+      React.createElement(Met,{label:"DeFi TVL",value:"$"+MD.tvl+"B"}),
+      React.createElement("div",{style:{marginTop:6}},
+        React.createElement("div",{style:{fontFamily:MF,fontSize:9,color:C.tD,letterSpacing:1.5,marginBottom:4}},"FEAR & GREED"),
+        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
+          React.createElement("div",{style:{width:36,height:36,borderRadius:"50%",border:`3px solid ${C.r}`,display:"flex",alignItems:"center",justifyContent:"center"}},
+            React.createElement("span",{style:{fontFamily:MF,fontSize:14,fontWeight:900,color:C.r}},MD.fg)
+          ),
+          React.createElement("span",{style:{fontFamily:MF,fontSize:10,color:C.r,fontWeight:700}},"EXTREME FEAR")
+        )
+      )
+    ),
+    // BTC Chart
+    React.createElement(Panel,{title:"BTC Price — Oct 2025 to Present",icon:"📉",color:C.a,span:2},
+      React.createElement(ResponsiveContainer,{width:"100%",height:200},
+        React.createElement(AreaChart,{data:BTCH},
+          React.createElement("defs",null,React.createElement("linearGradient",{id:"bg1",x1:"0",y1:"0",x2:"0",y2:"1"},
+            React.createElement("stop",{offset:"5%",stopColor:C.a,stopOpacity:0.3}),
+            React.createElement("stop",{offset:"95%",stopColor:C.a,stopOpacity:0})
+          )),
+          React.createElement(XAxis,{dataKey:"d",tick:{fill:C.tD,fontSize:9,fontFamily:MF},axisLine:{stroke:C.pb},tickLine:false}),
+          React.createElement(YAxis,{tick:{fill:C.tD,fontSize:9,fontFamily:MF},axisLine:false,tickLine:false,domain:[55000,130000],tickFormatter:v=>"$"+(v/1000).toFixed(0)+"K"}),
+          React.createElement(Tooltip,{content:React.createElement(CTip)}),
+          React.createElement(Area,{type:"monotone",dataKey:"p",stroke:C.a,fill:"url(#bg1)",strokeWidth:2,name:"BTC",dot:{r:2,fill:C.a}})
+        )
+      )
+    ),
+    // Fear chart
+    React.createElement(Panel,{title:"Fear & Greed Index",icon:"🌡",color:C.r,span:2},
+      React.createElement(ResponsiveContainer,{width:"100%",height:200},
+        React.createElement(AreaChart,{data:FGH},
+          React.createElement("defs",null,React.createElement("linearGradient",{id:"fg1",x1:"0",y1:"0",x2:"0",y2:"1"},
+            React.createElement("stop",{offset:"5%",stopColor:C.r,stopOpacity:0.3}),
+            React.createElement("stop",{offset:"95%",stopColor:C.r,stopOpacity:0})
+          )),
+          React.createElement(XAxis,{dataKey:"d",tick:{fill:C.tD,fontSize:9,fontFamily:MF},axisLine:{stroke:C.pb},tickLine:false}),
+          React.createElement(YAxis,{tick:{fill:C.tD,fontSize:9,fontFamily:MF},axisLine:false,tickLine:false,domain:[0,60]}),
+          React.createElement(Tooltip,{content:React.createElement(CTip)}),
+          React.createElement(Area,{type:"monotone",dataKey:"v",stroke:C.r,fill:"url(#fg1)",strokeWidth:2,name:"F&G Index",dot:{r:2,fill:C.r}})
+        )
+      )
+    ),
+    // ETF Flows
+    React.createElement(Panel,{title:"US Spot ETF Net Flows ($M)",icon:"📊",color:C.pu,span:2},
+      React.createElement(ResponsiveContainer,{width:"100%",height:180},
+        React.createElement(BarChart,{data:ETFF},
+          React.createElement(XAxis,{dataKey:"d",tick:{fill:C.tD,fontSize:9,fontFamily:MF},axisLine:{stroke:C.pb},tickLine:false}),
+          React.createElement(YAxis,{tick:{fill:C.tD,fontSize:9,fontFamily:MF},axisLine:false,tickLine:false}),
+          React.createElement(Tooltip,{content:React.createElement(CTip)}),
+          React.createElement(Bar,{dataKey:"btc",name:"BTC ETF"},
+            ...ETFF.map((e,i)=>React.createElement(Cell,{key:i,fill:e.btc>=0?C.g:C.r,opacity:0.8}))
+          ),
+          React.createElement(Bar,{dataKey:"eth",name:"ETH ETF"},
+            ...ETFF.map((e,i)=>React.createElement(Cell,{key:i,fill:e.eth>=0?C.cy:C.pu,opacity:0.6}))
+          )
+        )
+      )
+    ),
+    // MSTR
+    React.createElement(Panel,{title:"Strategy (MSTR) Stress Monitor",icon:"🏢",color:C.r,span:2},
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}},
+        React.createElement(Met,{label:"BTC Held",value:"713,502"}),
+        React.createElement(Met,{label:"Avg Cost",value:"$76,000"}),
+        React.createElement(Met,{label:"Current",value:"$70,790"}),
+        React.createElement(Met,{label:"Unrealized P/L",value:"-$3.7B"}),
+        React.createElement(Met,{label:"Q4 Net Loss",value:"-$12.4B"}),
+        React.createElement(Met,{label:"Stock Δ Peak",value:"-72%"})
+      ),
+      React.createElement("div",{style:{marginTop:10,padding:8,background:"rgba(255,59,92,0.08)",border:"1px solid rgba(255,59,92,0.2)",borderRadius:2}},
+        React.createElement("div",{style:{fontFamily:MF,fontSize:10,color:C.r,fontWeight:700}},"⚠ CEO: BTC must fall to $8K for 5-6yr for solvency risk. Cash: $2.25B (~2.5yr). mNAV collapsing.")
+      )
+    )
+  );
+
+  const renderDefi=()=>React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}},
+    React.createElement(Panel,{title:"DeFi TVL Breakdown",icon:"🔒",color:C.cy},
+      ...[{ch:"Ethereum",tvl:74.2,s:62,c:C.cy},{ch:"Solana",tvl:10.0,s:8.3,c:C.pu},{ch:"Arbitrum",tvl:3.0,s:2.5,c:C.a},{ch:"BSC",tvl:4.8,s:4,c:C.a},{ch:"Others",tvl:6.4,s:5.3,c:C.tD}].map((x,i)=>
+        React.createElement("div",{key:i,style:{marginBottom:10}},
+          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontFamily:MF,fontSize:10}},
+            React.createElement("span",{style:{color:x.c}},x.ch),
+            React.createElement("span",{style:{color:C.tB}},"$"+x.tvl+"B ("+x.s+"%)")
+          ),
+          React.createElement(PBar,{value:x.s,max:70,color:x.c})
+        )
+      ),
+      React.createElement("div",{style:{marginTop:8,padding:6,background:"rgba(255,59,92,0.06)",borderRadius:2}},
+        React.createElement("div",{style:{fontFamily:MF,fontSize:9,color:C.r}},"TVL below $100B — first time since May 2025")
+      )
+    ),
+    React.createElement(Panel,{title:"Liquidation Events",icon:"💥",color:C.r},
+      ...[{p:"Aave",a:"$450M+",t:"Multi-collateral liquidations"},{p:"Trend Research",a:"$322.5M",t:"170K ETH sold in 10hrs"},{p:"Coinbase Loans",a:"$170M",t:"2,000 users, $90M on Thu"},{p:"Total Crypto",a:"$2B+",t:"Long+Short this week"}].map((l,i)=>
+        React.createElement("div",{key:i,style:{marginBottom:10,padding:8,background:"rgba(0,0,0,0.3)",borderRadius:2,borderLeft:`2px solid ${C.r}`}},
+          React.createElement("div",{style:{display:"flex",justifyContent:"space-between"}},
+            React.createElement("span",{style:{fontFamily:MF,fontSize:11,color:C.tB,fontWeight:700}},l.p),
+            React.createElement("span",{style:{fontFamily:MF,fontSize:11,color:C.r,fontWeight:700}},l.a)
+          ),
+          React.createElement("div",{style:{fontFamily:MF,fontSize:9,color:C.tD,marginTop:2}},l.t)
+        )
+      )
+    ),
+    React.createElement(Panel,{title:"Protocol Updates",icon:"🔄",color:C.g},
+      ...[{n:"ETH Glamsterdam",s:"H1 2026",d:"Parallel processing, gas 60M→200M",c:C.cy},{n:"ENS → L1 Only",s:"CONFIRMED",d:"Abandoned L2. ENSv2 mainnet.",c:C.g},{n:"OP Buybacks",s:"ANNOUNCED",d:"Value accrual model shift",c:C.a},{n:"SOL Alpenglow",s:"H1 2026",d:"150ms finality. 98% approval.",c:C.pu},{n:"RLUSD Growth",s:"ACTIVE",d:"$36.2B CEX vol YTD.",c:C.g}].map((p,i)=>
+        React.createElement("div",{key:i,style:{marginBottom:8,display:"flex",gap:8,alignItems:"flex-start"}},
+          React.createElement("span",{style:{fontFamily:MF,fontSize:8,color:p.c,background:p.c+"15",padding:"2px 5px",borderRadius:2,whiteSpace:"nowrap",marginTop:2}},p.s),
+          React.createElement("div",null,
+            React.createElement("div",{style:{fontFamily:MF,fontSize:10,color:C.tB}},p.n),
+            React.createElement("div",{style:{fontFamily:MF,fontSize:9,color:C.tD}},p.d)
+          )
+        )
+      )
+    ),
+    React.createElement(Panel,{title:"Token Unlocks — Next Week ($420M)",icon:"🔓",color:C.a,span:3},
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:8}},
+        ...TUNL.map((t,i)=>React.createElement("div",{key:i,style:{padding:10,background:"rgba(0,0,0,0.3)",borderRadius:2,textAlign:"center",borderTop:`2px solid ${C.a}`}},
+          React.createElement("div",{style:{fontFamily:MF,fontSize:14,color:C.a,fontWeight:900}},t.token),
+          React.createElement("div",{style:{fontFamily:MF,fontSize:16,color:C.tB,fontWeight:700,margin:"4px 0"}},"$"+t.value+"M"),
+          React.createElement("div",{style:{fontFamily:MF,fontSize:8,color:C.tD}},t.date)
+        ))
+      )
+    )
+  );
+
+  const renderSolana=()=>React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}},
+    React.createElement(Panel,{title:"SOL Price Analysis",icon:"◎",color:C.pu,span:2},
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:12,marginBottom:12}},
+        React.createElement(Met,{label:"Price",value:88.03,prefix:"$",change:1.96}),
+        React.createElement(Met,{label:"ATH",value:"$293"}),
+        React.createElement(Met,{label:"Low (Feb 5)",value:"$67.31"}),
+        React.createElement(Met,{label:"30d Chg",value:"-43.4%"})
+      ),
+      React.createElement("div",{style:{padding:10,background:"rgba(255,184,0,0.06)",border:"1px solid rgba(255,184,0,0.2)",borderRadius:2,marginBottom:10}},
+        React.createElement("div",{style:{fontFamily:MF,fontSize:10,color:C.a,fontWeight:700}},"⚠ DEAD CAT BOUNCE WARNING"),
+        React.createElement("div",{style:{fontFamily:MF,fontSize:9,color:C.tD,marginTop:4}},"Rebound $67→$88 on below-avg volume. Dense resistance $87-93. Must reclaim $100. Failure risks $70→$60.")
+      ),
+      React.createElement("div",{style:{fontFamily:MF,fontSize:10,color:C.tD,lineHeight:1.8}},
+        React.createElement("span",{style:{color:C.g}},"Support: "),
+        "$80-82 → $70 → $60",
+        React.createElement("br"),
+        React.createElement("span",{style:{color:C.r}},"Resistance: "),
+        "$93-95 → $100 → $105 → $117"
+      )
+    ),
+    React.createElement(Panel,{title:"SOL Catalysts",icon:"🚀",color:C.g},
+      ...[{i:"Alpenglow Upgrade",d:"150ms finality. Mainnet H1 2026.",im:"HIGH"},{i:"Spot ETF Filings",d:"VanEck, Fidelity. 91% odds.",im:"HIGH"},{i:"Firedancer Client",d:"Jump's validator. Throughput↑",im:"MED"},{i:"RWA Growth",d:">$873M tokenized on SOL.",im:"MED"},{i:"Privacy Hackathon",d:"Winners Feb 10. $70K pool.",im:"LOW"},{i:"StdChart Target",d:"$250 (from $310). $2K by 2030.",im:"INFO"}].map((c,i)=>
+        React.createElement("div",{key:i,style:{marginBottom:6,display:"flex",gap:6,alignItems:"flex-start"}},
+          React.createElement("span",{style:{fontFamily:MF,fontSize:8,padding:"1px 4px",borderRadius:2,whiteSpace:"nowrap",marginTop:2,color:c.im==="HIGH"?C.g:c.im==="MED"?C.a:C.tD,background:c.im==="HIGH"?C.gK:"rgba(255,184,0,0.1)"}},c.im),
+          React.createElement("div",null,
+            React.createElement("div",{style:{fontFamily:MF,fontSize:10,color:C.tB}},c.i),
+            React.createElement("div",{style:{fontFamily:MF,fontSize:8,color:C.tD}},c.d)
+          )
+        )
+      )
+    ),
+    React.createElement(Panel,{title:"Step Finance Hack — $40M",icon:"🔴",color:C.r,span:2},
+      React.createElement("div",{style:{fontFamily:MF,fontSize:10,lineHeight:1.8,color:C.tD}},
+        React.createElement("span",{style:{color:C.r,fontWeight:700}},"Jan 31, 2026"),
+        " — Executive devices compromised. 261,854 SOL drained. $4.7M recovered. STEP ",
+        React.createElement("span",{style:{color:C.r}},"-80%"),". ",
+        React.createElement("br"),React.createElement("br"),
+        React.createElement("span",{style:{color:C.a,fontWeight:700}},"PATTERN: "),
+        "Broader opsec attack wave. Compromised Telegram → ",
+        React.createElement("span",{style:{color:C.r}},"$300M+")," total losses. Similar: CrediX ($4.5M), Upbit ($35M).",
+        React.createElement("br"),React.createElement("br"),
+        React.createElement("span",{style:{color:C.r,fontWeight:700}},"ACTION: "),
+        "Avoid STEP. Verify multi-sig treasury controls before depositing anywhere."
+      )
+    ),
+    React.createElement(Panel,{title:"Network Stats",icon:"📡",color:C.cy},
+      React.createElement(Met,{label:"Staking Yield",value:"~4% APY"}),
+      React.createElement(Met,{label:"DefiDev (DFDV)",value:"+22%"}),
+      React.createElement(Met,{label:"Nakamoto Coeff",value:"20 (was 31)"}),
+      React.createElement(Met,{label:"ETF Inflows",value:">$600M"}),
+      React.createElement("div",{style:{marginTop:8,padding:6,background:"rgba(0,212,255,0.06)",borderRadius:2}},
+        React.createElement("div",{style:{fontFamily:MF,fontSize:9,color:C.cy}},"TVL declining but fundamentals hold. Dev activity strong. ETF filings provide structural floor.")
+      )
+    )
+  );
+
+  const renderRisk=()=>React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}},
+    React.createElement(Panel,{title:"Risk Radar",icon:"⚠",color:C.r,span:2},
+      ...RISKS.map((r,i)=>React.createElement("div",{key:i,style:{marginBottom:8,padding:12,borderRadius:2,background:r.level==="CRITICAL"?"rgba(255,59,92,0.08)":r.level==="HIGH"?"rgba(255,184,0,0.06)":"rgba(0,0,0,0.3)",borderLeft:`3px solid ${r.level==="CRITICAL"?C.r:r.level==="HIGH"?C.a:r.level==="MEDIUM"?C.cy:C.tD}`}},
+        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:4}},
+          React.createElement("span",{style:{fontFamily:MF,fontSize:9,fontWeight:900,letterSpacing:1,padding:"2px 6px",borderRadius:2,color:r.level==="CRITICAL"?C.r:r.level==="HIGH"?C.a:C.cy,background:r.level==="CRITICAL"?"rgba(255,59,92,0.15)":r.level==="HIGH"?"rgba(255,184,0,0.15)":"rgba(0,212,255,0.15)"}},r.level),
+          React.createElement("span",{style:{fontFamily:MF,fontSize:12,color:C.tB,fontWeight:700}},r.title)
+        ),
+        React.createElement("div",{style:{fontFamily:MF,fontSize:10,color:C.tD,paddingLeft:4}},r.detail)
+      ))
+    ),
+    React.createElement(Panel,{title:"ETH Liquidation Map",icon:"💣",color:C.r},
+      ...LIQD.map((l,i)=>React.createElement("div",{key:i,style:{marginBottom:12,padding:10,background:"rgba(0,0,0,0.3)",borderRadius:2}},
+        React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:4}},
+          React.createElement("span",{style:{fontFamily:MF,fontSize:11,color:C.tB,fontWeight:700}},l.name),
+          React.createElement("span",{style:{fontFamily:MF,fontSize:9,fontWeight:700,padding:"1px 5px",borderRadius:2,color:l.risk==="CRITICAL"?C.r:C.a,background:l.risk==="CRITICAL"?"rgba(255,59,92,0.15)":"rgba(255,184,0,0.15)"}},l.risk)
+        ),
+        React.createElement("div",{style:{fontFamily:MF,fontSize:10,color:C.tD}},l.eth.toLocaleString()+" ETH | Liq @ $"+l.liq.toLocaleString()),
+        React.createElement(PBar,{value:2135-l.liq,max:2135-1000,color:l.risk==="CRITICAL"?C.r:C.a,label:"Buffer: $"+(2135-l.liq).toLocaleString()+" ("+((2135-l.liq)/2135*100).toFixed(0)+"%)"})
+      ))
+    ),
+    React.createElement(Panel,{title:"Avoid List",icon:"🚫",color:C.r},
+      ...["New memecoin launches — liquidity too thin","Protocols without verified multi-sig","Any leveraged long positions","STEP token until investigation complete","Sub-top-20 alts with declining volume","MSTR equity — no floor","Bridges without recent audit"].map((item,i)=>
+        React.createElement("div",{key:i,style:{fontFamily:MF,fontSize:10,color:C.tD,marginBottom:6,paddingLeft:12,borderLeft:`2px solid ${C.r}`,lineHeight:1.4}},item)
+      )
+    )
+  );
+
+  const renderAlpha=()=>React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}},
+    React.createElement(Panel,{title:"Recommendations",icon:"★",color:C.g,span:2},
+      React.createElement("div",{style:{overflow:"auto"}},
+        React.createElement("table",{style:{width:"100%",borderCollapse:"collapse",fontFamily:MF,fontSize:10}},
+          React.createElement("thead",null,React.createElement("tr",{style:{borderBottom:`1px solid ${C.pb}`}},
+            ...["Asset","Action","Zone","EV","Size"].map(h=>React.createElement("th",{key:h,style:{textAlign:"left",padding:"6px 8px",color:C.tD,fontSize:9,letterSpacing:1,fontWeight:600}},h))
+          )),
+          React.createElement("tbody",null,
+            ...RECS.map((r,i)=>React.createElement("tr",{key:i,style:{borderBottom:`1px solid ${C.pb}10`}},
+              React.createElement("td",{style:{padding:8,color:C.tB,fontWeight:700}},r.asset),
+              React.createElement("td",{style:{padding:8,color:r.color,fontWeight:700}},r.action),
+              React.createElement("td",{style:{padding:8,color:C.tD}},r.zone),
+              React.createElement("td",{style:{padding:8,color:r.color}},r.ev),
+              React.createElement("td",{style:{padding:8,color:C.tD}},r.size)
+            ))
+          )
+        )
+      )
+    ),
+    React.createElement(Panel,{title:"Yield Plays",icon:"💰",color:C.g},
+      ...[{s:"SOL Staking",p:"Coinbase / BSOL",y:"~4% APY",r:"LOW"},{s:"USDC/USDT Aave",p:"ETH Mainnet",y:"6-12% APY",r:"MED"},{s:"T-Bills",p:"TradFi",y:"~4.5%",r:"LOWEST"}].map((y,i)=>
+        React.createElement("div",{key:i,style:{marginBottom:10,padding:8,background:"rgba(0,255,157,0.04)",borderRadius:2,borderLeft:`2px solid ${C.g}`}},
+          React.createElement("div",{style:{fontFamily:MF,fontSize:11,color:C.g,fontWeight:700}},y.s),
+          React.createElement("div",{style:{fontFamily:MF,fontSize:9,color:C.tD,marginTop:2}},y.p),
+          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginTop:4}},
+            React.createElement("span",{style:{fontFamily:MF,fontSize:12,color:C.tB,fontWeight:700}},y.y),
+            React.createElement("span",{style:{fontFamily:MF,fontSize:9,color:y.r==="LOW"?C.g:y.r==="MED"?C.a:C.cy}},y.r+" RISK")
+          )
+        )
+      )
+    ),
+    React.createElement(Panel,{title:"Key Alpha Signals",icon:"🎯",color:C.cy,span:2},
+      ...[
+        {s:"Trend Research ETH unwind not over",d:"293K ETH. Liq $1,562-$1,698. Monitor Aave health factors.",pr:"CRITICAL"},
+        {s:"BTC OGs are sellers",d:"CryptoQuant: long-term holders driving selloff. Below 365d MA since Mar 2022. Record $3.2B realized loss.",pr:"HIGH"},
+        {s:"ETH whale accumulation vs ETF selling",d:"Whales buying dip at $2,050. Exchange reserves at multi-year lows. But ETH ETFs: 3 months net selling.",pr:"HIGH"},
+        {s:"LINK anomalous rising OI",d:"One of few tokens with increasing open interest during selloff. Smart money positioning.",pr:"MEDIUM"},
+        {s:"OP buyback mechanism",d:"First major L2 to introduce buybacks. Shifts from inflationary to value-accruing.",pr:"MEDIUM"}
+      ].map((s,i)=>React.createElement("div",{key:i,style:{marginBottom:10,padding:10,background:"rgba(0,0,0,0.3)",borderRadius:2,borderLeft:`3px solid ${s.pr==="CRITICAL"?C.r:s.pr==="HIGH"?C.a:C.cy}`}},
+        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:3}},
+          React.createElement("span",{style:{fontFamily:MF,fontSize:8,fontWeight:900,letterSpacing:1,padding:"1px 5px",borderRadius:2,color:s.pr==="CRITICAL"?C.r:s.pr==="HIGH"?C.a:C.cy,background:s.pr==="CRITICAL"?"rgba(255,59,92,0.15)":s.pr==="HIGH"?"rgba(255,184,0,0.1)":"rgba(0,212,255,0.1)"}},s.pr),
+          React.createElement("span",{style:{fontFamily:MF,fontSize:11,color:C.tB,fontWeight:700}},s.s)
+        ),
+        React.createElement("div",{style:{fontFamily:MF,fontSize:9,color:C.tD,lineHeight:1.5}},s.d)
+      ))
+    ),
+    React.createElement(Panel,{title:"Watchlist",icon:"👁",color:C.a},
+      ...[{a:"BTC $54-58K",t:"200-wk EMA test",n:"Generational buy"},{a:"ETH post-TR liq",t:"Health factor",n:"Biggest overhang"},{a:"OP",t:"Buyback exec",n:"Value shift"},{a:"LINK",t:"Rising OI",n:"Smart money"}].map((w,i)=>
+        React.createElement("div",{key:i,style:{marginBottom:8,padding:6,borderBottom:`1px solid ${C.pb}20`}},
+          React.createElement("div",{style:{fontFamily:MF,fontSize:11,color:C.a,fontWeight:700}},w.a),
+          React.createElement("div",{style:{fontFamily:MF,fontSize:9,color:C.tD}},w.t+" — "+w.n)
+        )
+      )
+    )
+  );
+
+  const renderTerminal=()=>React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}},
+    React.createElement(Panel,{title:"AI Research Terminal",icon:"▸",color:C.g,span:2,status:scanning?"SCANNING":"READY"},
+      React.createElement("div",{style:{marginBottom:10,display:"flex",gap:8,alignItems:"center"}},
+        React.createElement("button",{onClick:runScan,disabled:scanning,style:{fontFamily:MF,fontSize:11,fontWeight:700,background:scanning?C.pb:C.gK,color:C.g,border:`1px solid ${C.g}`,padding:"8px 20px",cursor:scanning?"wait":"pointer",borderRadius:2}},scanning?"⟳ SCANNING...":"▶ EXECUTE FULL SCAN"),
+        React.createElement("span",{style:{fontFamily:MF,fontSize:9,color:C.tD}},"Claude API + web search for real-time intelligence")
+      ),
+      React.createElement(AITerm,{logs,isRunning:scanning})
+    ),
+    aiRes&&!aiRes.raw&&React.createElement(Panel,{title:"Live Results",icon:"📡",color:C.cy},
+      React.createElement(Met,{label:"BTC",value:aiRes.btc_price,prefix:"$"}),
+      React.createElement(Met,{label:"ETH",value:aiRes.eth_price,prefix:"$"}),
+      React.createElement(Met,{label:"SOL",value:aiRes.sol_price,prefix:"$"}),
+      aiRes.market_cap_trillions&&React.createElement(Met,{label:"MCap",value:"$"+aiRes.market_cap_trillions+"T"}),
+      aiRes.fear_greed&&React.createElement(Met,{label:"F&G",value:aiRes.fear_greed}),
+      React.createElement("div",{style:{marginTop:8,padding:6,background:"rgba(0,0,0,0.3)",borderRadius:2}},
+        React.createElement("div",{style:{fontFamily:MF,fontSize:9,color:C.a,fontWeight:700}},"RISK: "+aiRes.risk_level)
+      )
+    ),
+    aiRes&&!aiRes.raw&&React.createElement(Panel,{title:"AI Signal",icon:"🧠",color:C.pu},
+      aiRes.key_signal&&React.createElement("div",{style:{marginBottom:10,padding:8,background:"rgba(168,85,247,0.08)",borderRadius:2,borderLeft:`3px solid ${C.pu}`}},
+        React.createElement("div",{style:{fontFamily:MF,fontSize:9,color:C.pu,fontWeight:700,marginBottom:2}},"KEY SIGNAL"),
+        React.createElement("div",{style:{fontFamily:MF,fontSize:10,color:C.tB,lineHeight:1.5}},aiRes.key_signal)
+      ),
+      ...(aiRes.top_news||[]).map((n,i)=>React.createElement("div",{key:i,style:{fontFamily:MF,fontSize:10,color:C.tD,marginBottom:6,paddingLeft:8,borderLeft:`2px solid ${C.pb}`,lineHeight:1.4}},"["+(i+1)+"] "+n)),
+      aiRes.recommendation&&React.createElement("div",{style:{marginTop:10,padding:8,background:C.gK,borderRadius:2}},
+        React.createElement("div",{style:{fontFamily:MF,fontSize:10,color:C.g,lineHeight:1.5}},aiRes.recommendation)
+      )
+    ),
+    aiRes?.raw&&React.createElement(Panel,{title:"Raw Intelligence",icon:"📄",color:C.a,span:2},
+      React.createElement("div",{style:{fontFamily:MF,fontSize:10,color:C.tD,lineHeight:1.6,whiteSpace:"pre-wrap",maxHeight:300,overflow:"auto"}},aiRes.raw)
+    ),
+    React.createElement(Panel,{title:"System Config",icon:"⚙",color:C.tD,span:2},
+      React.createElement("div",{style:{fontFamily:MF,fontSize:10,color:C.tD,lineHeight:2}},
+        React.createElement("span",{style:{color:C.g}},"scan_interval: "),"3600s",React.createElement("br"),
+        React.createElement("span",{style:{color:C.g}},"model: "),"claude-sonnet-4-20250514",React.createElement("br"),
+        React.createElement("span",{style:{color:C.g}},"tools: "),"web_search_20250305",React.createElement("br"),
+        React.createElement("span",{style:{color:C.g}},"sources: "),"CoinDesk, CoinGecko, DefiLlama, Tokenomist, CryptoQuant",React.createElement("br"),
+        React.createElement("span",{style:{color:C.g}},"status: "),React.createElement("span",{style:{color:C.g}},"● OPERATIONAL")
+      )
+    )
+  );
+
+  const content={dashboard:renderDashboard,defi:renderDefi,solana:renderSolana,risk:renderRisk,alpha:renderAlpha,terminal:renderTerminal};
+
+  return React.createElement("div",{style:{background:C.bg,minHeight:"100vh",fontFamily:MF,color:C.t}},
+    React.createElement(Scan),
+    // Header
+    React.createElement("header",{style:{background:"linear-gradient(180deg,#0d1219,#0a0e14)",borderBottom:`1px solid ${C.pb}`,padding:"8px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:100}},
+      React.createElement("div",{style:{display:"flex",alignItems:"center",gap:16}},
+        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
+          React.createElement("span",{style:{color:C.g,fontSize:18,fontWeight:900,letterSpacing:3}},"PABL0"),
+          React.createElement("span",{style:{color:C.tD,fontSize:9,border:`1px solid ${C.pb}`,padding:"1px 5px",borderRadius:2}},"v2.6")
+        ),
+        React.createElement("div",{style:{width:1,height:20,background:C.pb}}),
+        React.createElement("span",{style:{fontSize:9,color:C.tD,letterSpacing:1}},"CRYPTO INTELLIGENCE SYSTEM")
+      ),
+      React.createElement("div",{style:{display:"flex",alignItems:"center",gap:16}},
+        React.createElement("div",{style:{textAlign:"right"}},
+          React.createElement("div",{style:{fontSize:9,color:C.tD,letterSpacing:1}},"NEXT SCAN"),
+          React.createElement("div",{style:{fontSize:14,color:cd<300?C.a:C.g,fontWeight:700}},fmtCd(cd))
+        ),
+        React.createElement("div",{style:{textAlign:"right"}},
+          React.createElement("div",{style:{fontSize:9,color:C.tD}},"STATUS"),
+          React.createElement("div",{style:{fontSize:10,color:C.g}},"● ONLINE")
+        ),
+        React.createElement("div",{style:{textAlign:"right"}},
+          React.createElement("div",{style:{fontSize:9,color:C.tD}},now.toLocaleDateString()),
+          React.createElement("div",{style:{fontSize:12,color:C.tB}},now.toLocaleTimeString())
+        ),
+        React.createElement("button",{onClick:runScan,disabled:scanning,style:{fontFamily:MF,fontSize:10,fontWeight:700,letterSpacing:1.5,background:scanning?C.pb:C.gK,color:C.g,border:`1px solid ${C.g}`,padding:"6px 14px",cursor:scanning?"wait":"pointer",borderRadius:2}},scanning?"SCANNING...":"▶ RUN SCAN")
+      )
+    ),
+    // Regime bar
+    React.createElement("div",{style:{background:"rgba(255,59,92,0.08)",borderBottom:"1px solid rgba(255,59,92,0.2)",padding:"6px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8}},
+      React.createElement("div",{style:{display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}},
+        React.createElement("span",{style:{color:C.r,fontSize:10,fontWeight:700,letterSpacing:1.5}},"⚠ MARKET REGIME: CAPITULATION"),
+        React.createElement("span",{style:{color:C.tD,fontSize:10}},"|"),
+        React.createElement("span",{style:{fontSize:10,color:C.r}},"Fear & Greed: 17/100"),
+        React.createElement("span",{style:{color:C.tD,fontSize:10}},"|"),
+        React.createElement("span",{style:{fontSize:10,color:C.a}},"70% CASH / 20% BTC / 10% ALT")
+      ),
+      React.createElement("span",{style:{fontSize:9,color:C.tD}},"FEB 8, 2026")
+    ),
+    // Nav
+    React.createElement("nav",{style:{display:"flex",borderBottom:`1px solid ${C.pb}`,background:C.bgL,padding:"0 8px",overflowX:"auto"}},
+      ...tabs.map(t=>React.createElement("button",{key:t.id,onClick:()=>setTab(t.id),style:{fontFamily:MF,fontSize:10,letterSpacing:1,fontWeight:tab===t.id?700:400,color:tab===t.id?C.g:C.tD,background:tab===t.id?"rgba(0,255,157,0.06)":"transparent",border:"none",borderBottom:tab===t.id?`2px solid ${C.g}`:"2px solid transparent",padding:"10px 16px",cursor:"pointer",whiteSpace:"nowrap"}},t.icon+" "+t.label))
+    ),
+    // Main
+    React.createElement("main",{style:{padding:12}},content[tab]?.()),
+    // Footer
+    React.createElement("footer",{style:{borderTop:`1px solid ${C.pb}`,padding:"6px 16px",display:"flex",justifyContent:"space-between",alignItems:"center",background:C.bgL}},
+      React.createElement("span",{style:{fontFamily:MF,fontSize:9,color:C.tD}},"PABL0 v2.6.0 | Not financial advice"),
+      React.createElement("span",{style:{fontFamily:MF,fontSize:9,color:C.gD}},"● Online | ",React.createElement(Cur))
+    )
+  );
+}
+
+ReactDOM.render(React.createElement(Pabl0),document.getElementById("root"));
+} catch(e) {
+  document.getElementById("root").innerHTML = '<div style="color:#ff3b5c;font-family:monospace;padding:40px"><h2>PABL0 ERROR</h2><pre>'+e.message+'</pre><pre>'+e.stack+'</pre></div>';
+}
+});
+</script>
+</body>
+</html>
